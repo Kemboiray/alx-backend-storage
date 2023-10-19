@@ -1,0 +1,9 @@
+from typing import Any, Callable
+
+class MyClass:
+    def my_method(self, *args: Any) -> Any:
+        pass
+
+def my_fun(method: Callable[['MyClass', ...], Any]) -> None:
+    pass
+

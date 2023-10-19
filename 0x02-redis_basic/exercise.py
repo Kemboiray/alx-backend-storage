@@ -1,6 +1,19 @@
 #!/usr/bin/env python3
 """This module defines a class `Cache` """
 from typing import Any, Callable, Optional, Union
+from functools import wraps
+
+
+def count_calls(fn: Callable) -> Callable:
+    """Count the number of times a function is called """
+    @wraps(fn)
+    def wrapper(*args, **kwargs) -> Any:
+        """Wrapper function for `fn` """
+        key = fn.__qualname__
+        ret = fn(*args, **kwargs)
+        args[0]._redis.incr(key)
+        return ret
+    return wrapper
 
 
 class Cache:
@@ -12,6 +25,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Store input data in `Redis` using randomly generated key
