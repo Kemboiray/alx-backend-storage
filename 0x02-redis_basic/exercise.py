@@ -15,13 +15,17 @@ def count_calls(method: Callable) -> Callable:
     return wrapper
 
 
-# def call_history(method: Callable) -> Callable:
-#     """Store the history of inputs and outputs for a function (`method`) """
-#     @wraps(method)
-#     def wrapper(*args, **kwargs):
-#         input_key = f"{method.__qualname__}:inputs"
-#         output_key = f"{method.__qualname__}:outputs"
-
+def call_history(method: Callable) -> Callable:
+    """Store the history of inputs and outputs for a function (`method`) """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        input_key = f"{method.__qualname__}:inputs"
+        output_key = f"{method.__qualname__}:outputs"
+        self._redis.rpush(input_key, str(args))
+        ret = method(self, *args, **kwargs)
+        self._redis.rpush(output_key, str(ret))
+        return ret
+    return wrapper
 
 
 class Cache:
@@ -34,6 +38,7 @@ class Cache:
         self._redis.flushdb()
 
     @count_calls
+    @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Store input data in `Redis` using randomly generated key
