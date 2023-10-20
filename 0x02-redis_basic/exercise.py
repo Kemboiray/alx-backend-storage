@@ -4,12 +4,12 @@ from typing import Any, Callable, Optional, Union
 from functools import wraps
 
 
-def count_calls(fn: Callable) -> Callable:
+def count_calls(method: Callable) -> Callable:
     """Count the number of times a function is called """
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        key = fn.__qualname__
-        ret = fn(*args, **kwargs)
+        key = method.__qualname__
+        ret = method(*args, **kwargs)
         args[0]._redis.incr(key)
         return ret
     return wrapper
