@@ -6,17 +6,20 @@ from functools import wraps
 
 def count_calls(method: Callable) -> Callable:
     """Count the number of times a function is called """
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         key = method.__qualname__
         ret = method(self, *args, **kwargs)
         self._redis.incr(key)
         return ret
+
     return wrapper
 
 
 def call_history(method: Callable) -> Callable:
     """Store the history of inputs and outputs for a function (`method`) """
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         input_key = f"{method.__qualname__}:inputs"
@@ -25,7 +28,22 @@ def call_history(method: Callable) -> Callable:
         ret = method(self, *args, **kwargs)
         self._redis.rpush(output_key, str(ret))
         return ret
+
     return wrapper
+
+
+def replay(method: Callable):
+    """Display the history of inputs and outputs for a function (`method`) """
+    name = method.__qualname__
+    self = method.__self__
+    input_key = f"{name}:inputs"
+    output_key = f"{name}:outputs"
+    n_calls = self._redis.get(name)
+    print(f"{name} was called {n_calls.decode('utf-8')} times:")
+    inputs = self._redis.lrange(input_key, 0, -1)
+    outputs = self._redis.lrange(output_key, 0, -1)
+    for i, o in zip(inputs, outputs):
+        print(f"{name}(*{i.decode('utf-8')}) -> {o.decode('utf-8')}")
 
 
 class Cache:
@@ -39,6 +57,7 @@ class Cache:
 
     @count_calls
     @call_history
+    # @replay
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Store input data in `Redis` using randomly generated key
@@ -69,11 +88,7 @@ class Cache:
 
 if __name__ == "__main__":
     cache = Cache()
-    TEST_CASES = {
-        b"foo": None,
-        123: int,
-        "bar": lambda d: d.decode("utf-8")
-    }
+    TEST_CASES = {b"foo": None, 123: int, "bar": lambda d: d.decode("utf-8")}
     for value, fn in TEST_CASES.items():
         key = cache.store(value)
         assert cache.get(key, fn=fn) == value
