@@ -6,7 +6,7 @@ from functools import wraps
 
 def count_calls(method: Callable) -> Callable:
     """Count the number of times a function is called """
-    @wraps(fn)
+    @wraps(method)
     def wrapper(*args, **kwargs):
         key = method.__qualname__
         ret = method(*args, **kwargs)
