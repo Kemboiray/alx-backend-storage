@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """This module defines a class `Cache` """
 from typing import Any, Callable, Optional, Union
-import functools
+from functools import wraps
 
 
 def count_calls(fn: Callable) -> Callable:
     """Count the number of times a function is called """
-    @functools.wraps(fn)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Wrapper function for `fn` """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
         key = fn.__qualname__
         ret = fn(*args, **kwargs)
         args[0]._redis.incr(key)
