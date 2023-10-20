@@ -7,13 +7,21 @@ from functools import wraps
 def count_calls(method: Callable) -> Callable:
     """Count the number of times a function is called """
     @wraps(method)
-    def wrapper(*args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         key = method.__qualname__
-        ret = method(*args, **kwargs)
-        self = args[0]
+        ret = method(self, *args, **kwargs)
         self._redis.incr(key)
         return ret
     return wrapper
+
+
+# def call_history(method: Callable) -> Callable:
+#     """Store the history of inputs and outputs for a function (`method`) """
+#     @wraps(method)
+#     def wrapper(*args, **kwargs):
+#         input_key = f"{method.__qualname__}:inputs"
+#         output_key = f"{method.__qualname__}:outputs"
+
 
 
 class Cache:
